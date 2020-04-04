@@ -5,9 +5,6 @@
 ## Covid19 Data ##
 #1 - https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series
 
-## Alternate data source (not used here) ##
-#1'- https://www.worldometers.info/covid19virus/
-
 ## US County-level population estimate for 2019 ##
 #2 - https://www.census.gov/data/tables/time-series/demo/popest/2010s-counties-total.html
 
@@ -31,7 +28,9 @@ from sklearn import metrics
 data_covid19 = pd.read_csv("data/covid19_data_US_2020_04_03.csv", dtype={'FIPS':object}) #1
 data_county_pop = pd.read_csv("data/county_population_data_US_2010_2019.csv") #2
 data_county_area = pd.read_csv("data/county_area_data_US.csv") #3
-data_temperature = pd.read_csv('data/climdiv-tmpccy-v1.0.0-20200304', delim_whitespace=True)
+column_names = ['State_County_Code_Year','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+data_temperature = pd.read_csv("data/climdiv-tmpccy-v1.0.0-20200304", delim_whitespace=True, names=column_names, header=None)
+#data_precipitation = pd.read_csv('data/climdiv-pcpncy-v1.0.0-20200304', delim_whitespace=True, names=column_names, header=None)
 
 #### Make State, County and Year columns in data_temperature #####
 data_temperature['State_code']=data_temperature['State_County_Code_Year'].astype(str).str.slice(start=0,stop=2)
@@ -118,6 +117,7 @@ for i in qualifying_County_State_list:
 list_of_population_reg_coefs_r2_score = []
 for i in regression.keys():
     list_entry=np.append(np.append(np.asarray(list(data[data['County_State']==i].Pop_Density)),regression[i].coef_.flatten()),regression_R2[i])
+    list_entry=np.append(list_entry,np.asarray(list(data[data['County_State']==i].iloc[:,-time_series_offset])))
     list_of_population_reg_coefs_r2_score.append(list_entry)
 
 list_of_temperature_reg_coefs_r2_score = []
@@ -133,10 +133,20 @@ plt.hist(list_of_population_reg_coefs_r2_score[:,2],20)
 plt.show()
 
 #### Number of cases growth rate vs. Population density ######
-plt.scatter(np.log(list_of_population_reg_coefs_r2_score[:,0]),list_of_population_reg_coefs_r2_score[:,1],(list_of_population_reg_coefs_r2_score[:,2]-0.8)*200)
+#plt.scatter(np.log(list_of_population_reg_coefs_r2_score[:,0]),list_of_population_reg_coefs_r2_score[:,1],(list_of_population_reg_coefs_r2_score[:,2]-0.8)*200)
+plt.scatter(np.log(list_of_population_reg_coefs_r2_score[:,0]),list_of_population_reg_coefs_r2_score[:,1],np.sqrt(list_of_population_reg_coefs_r2_score[:,3])*2)
+plt.xlabel("log(population density)")
+plt.ylabel("Growth rate of number of cases")
+plt.xlim((0.,10.))
+plt.ylim((0.,0.7))
 plt.show()
 
-plt.scatter(list_of_temperature_reg_coefs_r2_score[:,0],list_of_temperature_reg_coefs_r2_score[:,1],(list_of_population_reg_coefs_r2_score[:,2]-0.8)*200)
+#plt.scatter(list_of_temperature_reg_coefs_r2_score[:,0],list_of_temperature_reg_coefs_r2_score[:,1],(list_of_population_reg_coefs_r2_score[:,2]-0.8)*200)
+plt.scatter(list_of_temperature_reg_coefs_r2_score[:,0],list_of_temperature_reg_coefs_r2_score[:,1],np.sqrt(list_of_population_reg_coefs_r2_score[:,3])*2)
+plt.xlabel("Temperature (F)")
+plt.ylabel("Growth rate of number of cases")
+#plt.xlim((25.,60.))
+plt.ylim((0.,0.7))
 plt.show()
 
 
